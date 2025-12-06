@@ -28,7 +28,17 @@ public class UpdateUserTests extends TestBase {
 
         Map<String, String> requestBody = Map.of("name", name, "job", job);
 
-        given().header("x-api-key", API_KEY).body(requestBody).contentType(JSON).when().put(UPDATE_PATH).then().log().ifValidationFails().statusCode(200).body("name", is(name)).body("job", is(job));
+        given()
+                .header("x-api-key", API_KEY)
+                .body(requestBody)
+                .contentType(JSON)
+                .when()
+                .put(UPDATE_PATH)
+                .then()
+                .log().ifValidationFails()
+                .statusCode(200)
+                .body("name", is(name))
+                .body("job", is(job));
     }
 
     @Test
@@ -41,7 +51,17 @@ public class UpdateUserTests extends TestBase {
 
         OffsetDateTime beforeRequest = OffsetDateTime.now(ZoneOffset.UTC);
 
-        Response response = given().header("x-api-key", API_KEY).body(requestBody).contentType(JSON).when().put(UPDATE_PATH).then().log().ifValidationFails().statusCode(200).extract().response();
+        Response response =
+                given()
+                        .header("x-api-key", API_KEY)
+                        .body(requestBody)
+                        .contentType(JSON)
+                        .when()
+                        .put(UPDATE_PATH)
+                        .then()
+                        .log().ifValidationFails()
+                        .statusCode(200)
+                        .extract().response();
 
         OffsetDateTime updatedAt = OffsetDateTime.parse(response.path("updatedAt"));
 
@@ -52,6 +72,16 @@ public class UpdateUserTests extends TestBase {
     @DisplayName("Пустое поле в body при изменении данных пользователя")
     public void emptyBodyUserUpdate() {
         String requestBody = "";
-        given().header("x-api-key", API_KEY).body(requestBody).contentType(JSON).when().put(UPDATE_PATH).then().log().ifValidationFails().statusCode(400).body("error", is("Empty request body")).body("message", is("Request body cannot be empty for JSON endpoints"));
+        given()
+                .header("x-api-key", API_KEY)
+                .body(requestBody)
+                .contentType(JSON)
+                .when()
+                .put(UPDATE_PATH)
+                .then()
+                .log().ifValidationFails()
+                .statusCode(400)
+                .body("error", is("Empty request body"))
+                .body("message", is("Request body cannot be empty for JSON endpoints"));
     }
 }
