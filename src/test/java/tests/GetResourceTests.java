@@ -33,7 +33,7 @@ public class GetResourceTests extends TestBase {
 
         step("Проверяем ответ", () -> {
             assertNotNull(response.getData(), "Data не должна быть null");
-            assertEquals(2, response.getData().getId(), "ID должен быть 2");
+            assertEquals(ID, response.getData().getId(), "ID должен соответствовать запрашиваемому");
         });
     }
 
@@ -49,7 +49,8 @@ public class GetResourceTests extends TestBase {
 
         step("Проверяем, что тело пустой объект {}", () -> {
                     response.then().spec(baseResponseSpec(404));
-                    assertEquals("{}", response.getBody().asString());
+                    assertEquals("{}", response.getBody().asString()
+                            , "В ответе должен быть пустой объект");
                 }
         );
     }
@@ -64,8 +65,7 @@ public class GetResourceTests extends TestBase {
         );
 
         step("Проверяем, что доступ запрещен", () ->
-                response.then()
-                .spec(baseResponseSpec(403))
+                response.then().spec(baseResponseSpec(403))
         );
     }
 }

@@ -41,9 +41,12 @@ public class RegistrationTests extends TestBase {
                 .extract().as(RegistrationResponseModel.class));
 
         step("Проверяем валидность токена", () -> {
-            assertNotNull(response.getToken(), "Token должен быть не null");
-            assertEquals(17, response.getToken().length(), "Token должен содержать 17 символов");
-            assertTrue(response.getToken().matches("[A-Za-z0-9]+"), "Token должен содержать только буквы и цифры");
+            assertNotNull(response.getToken(),
+                    "Token должен быть не null");
+            assertEquals(17, response.getToken().length(),
+                    "Token должен содержать 17 символов");
+            assertTrue(response.getToken().matches("[A-Za-z0-9]+"),
+                    "Token должен содержать только буквы и цифры");
         });
     }
 
@@ -86,7 +89,8 @@ public class RegistrationTests extends TestBase {
     @DisplayName("Некорректные регистрационные данные")
     public void invalidRegistrationTest(String testName,
                                         Object requestBody,
-                                        String expectedError) {
+                                        String expectedError,
+                                        String expectedMessage) {
 
         Response response = step("Отправляем некорректный запрос " + testName, () ->
                 given(baseRequestSpec(BASE_PATH))
@@ -100,7 +104,10 @@ public class RegistrationTests extends TestBase {
             response.then().spec(baseResponseSpec(400));
 
             ErrorResponseModel error = response.as(ErrorResponseModel.class);
-            assertEquals(expectedError, error.getError());
+            assertAll("Проверяем содержание ошибок",
+                    () -> assertEquals(expectedError, error.getError(), "Некорректный тип ошибки"),
+                    () -> assertEquals(expectedMessage, error.getMessage(), "Некорректное сообщение об ошибке")
+            );
         });
     }
 

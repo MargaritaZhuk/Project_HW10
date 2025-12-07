@@ -43,10 +43,10 @@ public class UpdateUserTests extends TestBase {
                         .spec(baseResponseSpec(200))
                         .extract().as(UpdateResponseModel.class));
 
-        step("Проверяем, что данные изменены", () -> {
-            assertEquals(name, response.getName());
-            assertEquals(job, response.getJob());
-        });
+        step("Проверяем, что данные изменены", () -> assertAll("Валидация ответа",
+                () -> assertEquals(name, response.getName(), "Имя не соответствует"),
+                () -> assertEquals(job, response.getJob(), "Должность не соответствует")
+        ));
     }
 
     @Test
@@ -73,7 +73,7 @@ public class UpdateUserTests extends TestBase {
 
         step("Проверяем, что время изменения данных совпадает", () -> {
             OffsetDateTime updatedAt = OffsetDateTime.parse(response.getUpdatedAt());
-            assertTrue(updatedAt.isAfter(beforeRequest));
+            assertTrue(updatedAt.isAfter(beforeRequest), "UpdateAt не обновилось");
         });
     }
 
@@ -92,9 +92,10 @@ public class UpdateUserTests extends TestBase {
                         .extract().as(ErrorResponseModel.class)
         );
 
-        step("Проверяем ошибку в ответе", () -> {
-            assertEquals("Empty request body", response.getError());
-            assertEquals("Request body cannot be empty for JSON endpoints", response.getMessage());
-        });
+        step("Проверяем ошибку в ответе", () -> assertAll("Валидация ответа",
+                () -> assertEquals("Empty request body", response.getError(), "Неверный тип ошибки"),
+                () -> assertEquals("Request body cannot be empty for JSON endpoints",
+                        response.getMessage(), "Неверное сообщение об ошибке")
+        ));
     }
 }
