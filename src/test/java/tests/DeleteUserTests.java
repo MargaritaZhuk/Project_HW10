@@ -12,6 +12,7 @@ public class DeleteUserTests extends TestBase {
 
     private static final String BASE_PATH = "/api/users/";
 
+
     @Test
     @DisplayName("Успешное удаление пользователя")
     public void successDeleteTest() {

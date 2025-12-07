@@ -61,7 +61,7 @@ public class UpdateUserTests extends TestBase {
         OffsetDateTime beforeRequest = OffsetDateTime.now(ZoneOffset.UTC);
 
         UpdateResponseModel response = step("Отправляем запрос на изменнение данных", ()->
-                given(baseRequestSpec(BASE_PATH))
+                given(baseRequestSpec(BASE_PATH + 2))
                         .header("x-api-key", API_KEY)
                         .body(updateData)
                         .when()
@@ -81,7 +81,7 @@ public class UpdateUserTests extends TestBase {
     public void emptyBodyUserUpdate() {
         String requestBody = "";
         ErrorResponseModel response = step("Отправляем запрос на изменнение данных", ()->
-                given(baseRequestSpec(BASE_PATH))
+                given(baseRequestSpec(BASE_PATH + 2))
                         .header("x-api-key", API_KEY)
                         .body(requestBody)
                         .when()

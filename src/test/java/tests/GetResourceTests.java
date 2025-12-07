@@ -56,7 +56,7 @@ public class GetResourceTests extends TestBase {
     @DisplayName("Попытка получения данных без токена")
     public void forbiddenResourceTest() {
         Response response = step("Отправляем запрос на получение данных", () ->
-                baseRequestSpec(BASE_PATH + 23)
+                baseRequestSpec(BASE_PATH + 2)
                         .when()
                         .get()
         );
