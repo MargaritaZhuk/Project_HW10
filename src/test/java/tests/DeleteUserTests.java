@@ -1,5 +1,6 @@
 package tests;
 
+import io.restassured.response.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,18 +12,20 @@ import static specs.BaseResponseSpec.baseResponseSpec;
 public class DeleteUserTests extends TestBase {
 
     private static final String BASE_PATH = "/api/users/";
-
+    private static final int ID = 2;
 
     @Test
     @DisplayName("Успешное удаление пользователя")
     public void successDeleteTest() {
-        step("Отправляем запрос на удаление", () ->
-                baseRequestSpec(BASE_PATH + 2)
+        Response response = step("Отправляем запрос на удаление", () ->
+                baseRequestSpec(BASE_PATH + ID)
                         .header("x-api-key", API_KEY)
                         .when()
                         .delete()
-                        .then()
-                        .spec(baseResponseSpec(204))
+        );
+
+        step("Проверяем статус-код", () ->
+                response.then().spec(baseResponseSpec(204))
         );
     }
 }

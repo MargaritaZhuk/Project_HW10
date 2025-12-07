@@ -15,12 +15,14 @@ import static specs.BaseResponseSpec.*;
 public class GetResourceTests extends TestBase {
 
     private static final String BASE_PATH = "/api/unknown/";
+    private static final int ID = 2;
+    private static final int WRONG_ID = 23;
 
     @Test
     @DisplayName("Успешное получение данных пользователя")
     public void successResourceTest() {
         ResourceResponseModel response = step("Отправляем запрос на получение данных", () ->
-                baseRequestSpec(BASE_PATH + 2)
+                baseRequestSpec(BASE_PATH + ID)
                         .header("x-api-key", API_KEY)
                         .when()
                         .get()
@@ -39,7 +41,7 @@ public class GetResourceTests extends TestBase {
     @DisplayName("Попытка получение данных несуществующего")
     public void notFoundResourceTest() {
         Response response = step("Отправляем запрос на получение данных", () ->
-                baseRequestSpec(BASE_PATH + 23)
+                baseRequestSpec(BASE_PATH + WRONG_ID)
                         .header("x-api-key", API_KEY)
                         .when()
                         .get()
@@ -56,7 +58,7 @@ public class GetResourceTests extends TestBase {
     @DisplayName("Попытка получения данных без токена")
     public void forbiddenResourceTest() {
         Response response = step("Отправляем запрос на получение данных", () ->
-                baseRequestSpec(BASE_PATH + 2)
+                baseRequestSpec(BASE_PATH + ID)
                         .when()
                         .get()
         );

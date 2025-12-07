@@ -21,6 +21,7 @@ public class UpdateUserTests extends TestBase {
 
     private static final Faker faker = new Faker();
     private static final String BASE_PATH = "api/users/";
+    private static final int ID = 2;
 
     @Test
     @DisplayName("Успешное изменение данных пользователя")
@@ -33,7 +34,7 @@ public class UpdateUserTests extends TestBase {
         updateData.setJob(job);
 
         UpdateResponseModel response = step("Отправляем запрос на изменнение данных", ()->
-                given(baseRequestSpec(BASE_PATH + 2))
+                given(baseRequestSpec(BASE_PATH + ID))
                         .header("x-api-key", API_KEY)
                         .body(updateData)
                         .when()
@@ -61,7 +62,7 @@ public class UpdateUserTests extends TestBase {
         OffsetDateTime beforeRequest = OffsetDateTime.now(ZoneOffset.UTC);
 
         UpdateResponseModel response = step("Отправляем запрос на изменнение данных", ()->
-                given(baseRequestSpec(BASE_PATH + 2))
+                given(baseRequestSpec(BASE_PATH + ID))
                         .header("x-api-key", API_KEY)
                         .body(updateData)
                         .when()
@@ -81,7 +82,7 @@ public class UpdateUserTests extends TestBase {
     public void emptyBodyUserUpdate() {
         String requestBody = "";
         ErrorResponseModel response = step("Отправляем запрос на изменнение данных", ()->
-                given(baseRequestSpec(BASE_PATH + 2))
+                given(baseRequestSpec(BASE_PATH + ID))
                         .header("x-api-key", API_KEY)
                         .body(requestBody)
                         .when()
