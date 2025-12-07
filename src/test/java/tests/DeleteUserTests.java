@@ -3,19 +3,22 @@ package tests;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static io.restassured.RestAssured.given;
+import static io.qameta.allure.Allure.step;
+import static specs.DeleteUserSpec.deleteUserRequestSpec;
+import static specs.DeleteUserSpec.deleteUserResponseSpec;
 
 @DisplayName("Тесты на удаление")
 public class DeleteUserTests extends TestBase {
     @Test
     @DisplayName("Успешное удаление пользователя")
     public void successDeleteTest() {
-        given()
-                .header("x-api-key", API_KEY)
-                .when()
-                .delete("/users/2")
-                .then()
-                .log().all()
-                .statusCode(204);
+        step("Отправляем запрос на удаление", () ->
+                deleteUserRequestSpec("2")
+                        .header("x-api-key", API_KEY)
+                        .when()
+                        .delete()
+                        .then()
+                        .spec(deleteUserResponseSpec)
+        );
     }
 }

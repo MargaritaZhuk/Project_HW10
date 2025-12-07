@@ -1,49 +1,66 @@
 package tests;
 
+import io.restassured.response.ValidatableResponse;
+import models.ResourceResponseModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.Matchers.*;
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.is;
+import static io.qameta.allure.Allure.step;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static specs.GetResourceSpec.*;
+
 
 @DisplayName("Тесты на получение данных")
 public class GetResourceTests extends TestBase {
+
     @Test
-    @DisplayName("Успещное получение данных пользователя")
+    @DisplayName("Успешное получение данных пользователя")
     public void successResourceTest() {
-        given()
-                .header("x-api-key", API_KEY)
-                .when()
-                .get("/unknown/2")
-                .then()
-                .log().ifValidationFails()
-                .statusCode(200)
-                .body("data", notNullValue())
-                .body("data.id", is(2));
+        ResourceResponseModel response = step("Отправляем запрос на получение данных", () ->
+                getResourceSpec("2")
+                        .header("x-api-key", API_KEY)
+                        .when()
+                        .get()
+                        .then()
+                        .spec(getResourceResponseSpec)
+                        .extract().as(ResourceResponseModel.class)
+        );
+
+        step("Проверяем ответ", () -> {
+            assertNotNull(response.getData(), "Data не должна быть null");
+            assertEquals(2, response.getData().getId(), "ID должен быть 2");
+        });
     }
 
     @Test
     @DisplayName("Попытка получение данных несуществующего")
     public void notFoundResourceTest() {
-        given()
-                .header("x-api-key", API_KEY)
-                .when()
-                .get("/unknown/23")
-                .then()
-                .log().ifValidationFails()
-                .statusCode(404)
-                .body(is("{}"));
+        ValidatableResponse response = step("Отправляем запрос на получение данных", () ->
+                getResourceSpec("23")
+                        .header("x-api-key", API_KEY)
+                        .when()
+                        .get()
+                        .then()
+        );
+
+        step("Проверяем, что тело пустой объект {}", () ->
+                response.spec(errorResponseSpec(404, "{}"))
+        );
     }
 
     @Test
     @DisplayName("Попытка получения данных без токена")
     public void forbiddenResourceTest() {
-        given()
-                .when()
-                .get("/unknown/23")
-                .then()
-                .log().ifValidationFails()
-                .statusCode(403);
+        ValidatableResponse response = step("Отправляем запрос на получение данных", () ->
+                getResourceSpec("23")
+                        .when()
+                        .get()
+                        .then()
+        );
+
+        step("Проверяем, что доступ запрещен", () ->
+                response.spec(errorResponseSpec(403, null))
+        );
     }
 }

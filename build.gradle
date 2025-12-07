@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'io.qameta.allure' version '2.12.0'
+    id "io.freefair.lombok" version "6.0.0-m2"
 }
 
 group = 'zhuk.margarita'
@@ -9,16 +11,42 @@ repositories {
     mavenCentral()
 }
 
+def restAssuredVersion = "5.5.6",
+    allureVersion = "2.30.0"
+
+allure {
+    report {
+        version.set(allureVersion)
+    }
+    adapter {
+        aspectjWeaver.set(true)
+        frameworks {
+            junit5 {
+                adapterVersion.set(allureVersion)
+            }
+        }
+    }
+}
+
 
 dependencies {
     testImplementation (
             "org.junit.jupiter:junit-jupiter:5.10.0",
             'org.slf4j:slf4j-simple:2.0.7',
-            'io.rest-assured:rest-assured:5.5.6',
             'com.fasterxml.jackson.core:jackson-databind:2.20.0',
-            'com.github.javafaker:javafaker:1.0.2')
+            'com.github.javafaker:javafaker:1.0.2',
+            "io.rest-assured:rest-assured:$restAssuredVersion",
+            "io.rest-assured:json-schema-validator:$restAssuredVersion",
+            "io.qameta.allure:allure-rest-assured:$allureVersion")
 }
 
 tasks.withType(Test) {
     useJUnitPlatform()
+
+    testLogging {
+        lifecycle {
+            events "started", "skipped", "failed", "standard_error", "standard_out"
+            exceptionFormat "short"
+        }
+    }
 }
