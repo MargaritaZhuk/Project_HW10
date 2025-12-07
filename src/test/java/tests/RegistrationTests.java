@@ -1,6 +1,7 @@
 package tests;
 
 import io.restassured.response.Response;
+import models.ErrorResponseModel;
 import models.RegistrationBodyModel;
 import models.RegistrationResponseModel;
 import org.junit.jupiter.api.DisplayName;
@@ -14,10 +15,13 @@ import java.util.stream.Stream;
 import static io.qameta.allure.Allure.step;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.*;
-import static specs.RegistrationSpec.*;
+import static specs.BaseRequestSpec.baseRequestSpec;
+import static specs.BaseResponseSpec.baseResponseSpec;
 
 @DisplayName("Тесты на регистрацию")
 public class RegistrationTests extends TestBase {
+
+    private static final String BASE_PATH = "api/register";
 
     @Test
     @DisplayName("Успешная регистрация - проверяем соответствие токена")
@@ -27,13 +31,13 @@ public class RegistrationTests extends TestBase {
         registrationData.setPassword("pistol");
 
         RegistrationResponseModel response = step("Отправляем запрос на регистрацию", ()->
-        given(registrationRequestSpec)
+        given(baseRequestSpec(BASE_PATH))
                 .header("x-api-key", API_KEY)
                 .body(registrationData)
                 .when()
                 .post()
                 .then()
-                .spec(registrationResponseSpec)
+                .spec(baseResponseSpec(200))
                 .extract().as(RegistrationResponseModel.class));
 
         step("Проверяем валидность токена", () -> {
@@ -47,67 +51,56 @@ public class RegistrationTests extends TestBase {
     static Stream<Arguments> invalidRegistrationData() {
         return Stream.of(
                 Arguments.of("Без email",
-                        new RegistrationBodyModel(null, "pistol"), "Missing email or username"),
+                        new RegistrationBodyModel(null, "pistol"),
+                        "Missing email or username",
+                        null),
                 Arguments.of("Без пароля",
-                        new RegistrationBodyModel("test@test.com", null), "Missing password"),
+                        new RegistrationBodyModel("test@test.com", null),
+                        "Missing password",
+                        null),
                 Arguments.of("Email - пустая строка",
-                        new RegistrationBodyModel("", "pistol"), "Missing email or username"),
+                        new RegistrationBodyModel("", "pistol"),
+                        "Missing email or username",
+                        null),
                 Arguments.of("Невалидный email",
-                        new RegistrationBodyModel("aa@", "pistol"), "Note: Only defined users succeed registration")
+                        new RegistrationBodyModel("aa@", "pistol"),
+                        "Note: Only defined users succeed registration",
+                        null),
+                Arguments.of("Пустая строка",
+                        "",
+                        "Empty request body",
+                        "Request body cannot be empty for JSON endpoints"),
+                Arguments.of("Строка с пробелом",
+                        " ",
+                        "Bad Request",
+                        "Invalid request format"),
+                Arguments.of("Пустой объект",
+                        "{}",
+                        "Missing email or username", null)
         );
     }
+
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidRegistrationData")
     @DisplayName("Некорректные регистрационные данные")
-    public void invalidRegistrationTest(String testName, RegistrationBodyModel registrationData, String expectedError) {
+    public void invalidRegistrationTest(String testName,
+                                        Object requestBody,
+                                        String expectedError) {
 
-        Response response = step("Отправляем некорректный запрос {0}", () ->
-                given(registrationRequestSpec)
+        Response response = step("Отправляем некорректный запрос " + testName, () ->
+                given(baseRequestSpec(BASE_PATH))
                         .header("x-api-key", API_KEY)
-                        .body(registrationData)
+                        .body(requestBody)
                         .when()
                         .post()
         );
 
-        step("Проверяем ошибку в ответе", () ->
-                response
-                        .then()
-                        .spec(errorResponseSpec(expectedError, null))
-        );
-    }
+        step("Проверяем статус и тело ошибки", () -> {
+            response.then().spec(baseResponseSpec(400));
 
-    @Test
-    @DisplayName("Попытка регистрации с пустым объектом в body")
-    public void registrationNoBodyTest() {
-        String requestBody = "{}";
-        Response response = step("Отправляем запрос на регистрацию", ()->
-                given(registrationRequestSpec)
-                        .header("x-api-key", API_KEY)
-                        .body(requestBody)
-                        .when()
-                        .post());
-
-        step("Проверяем текст ошибки", () -> {
-            response.then()
-                    .spec(errorResponseSpec("Missing email or username", null));
-        });
-    }
-
-    @Test
-    @DisplayName("Попытка регистрации с пустой строкой в body")
-    public void registrationNullBodyTest() {
-        String requestBody = "";
-        Response response = step("Отправляем запрос на регистрацию", ()->
-                given(registrationRequestSpec)
-                        .header("x-api-key", API_KEY)
-                        .body(requestBody)
-                        .when()
-                        .post());
-
-        step("Проверяем текст ошибки", () -> {
-            response.then()
-                    .spec(errorResponseSpec("Empty request body", "Request body cannot be empty for JSON endpoints"));
+            ErrorResponseModel error = response.as(ErrorResponseModel.class);
+            assertEquals(expectedError, error.getError());
         });
     }
 
@@ -119,14 +112,14 @@ public class RegistrationTests extends TestBase {
         registrationData.setPassword("pistol");
 
         Response response = step("Отправляем запрос на регистрацию", () ->
-                given(registrationRequestSpec)
+                given(baseRequestSpec(BASE_PATH))
                         .body(registrationData)
                         .when()
                         .post());
 
         step("Проверяем, что доступ запрещен", () -> {
             response.then()
-                    .statusCode(403);
+                    .spec(baseResponseSpec(403));
         });
     }
 }

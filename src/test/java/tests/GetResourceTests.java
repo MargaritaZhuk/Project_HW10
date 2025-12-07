@@ -1,29 +1,31 @@
 package tests;
 
-import io.restassured.response.ValidatableResponse;
+import io.restassured.response.Response;
 import models.ResourceResponseModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static io.qameta.allure.Allure.step;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static specs.GetResourceSpec.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static specs.BaseRequestSpec.*;
+import static specs.BaseResponseSpec.*;
 
 
 @DisplayName("Тесты на получение данных")
 public class GetResourceTests extends TestBase {
 
+    private static final String BASE_PATH = "/api/unknown/";
+
     @Test
     @DisplayName("Успешное получение данных пользователя")
     public void successResourceTest() {
         ResourceResponseModel response = step("Отправляем запрос на получение данных", () ->
-                getResourceSpec("2")
+                baseRequestSpec(BASE_PATH + 2)
                         .header("x-api-key", API_KEY)
                         .when()
                         .get()
                         .then()
-                        .spec(getResourceResponseSpec)
+                        .spec(baseResponseSpec(200))
                         .extract().as(ResourceResponseModel.class)
         );
 
@@ -36,31 +38,32 @@ public class GetResourceTests extends TestBase {
     @Test
     @DisplayName("Попытка получение данных несуществующего")
     public void notFoundResourceTest() {
-        ValidatableResponse response = step("Отправляем запрос на получение данных", () ->
-                getResourceSpec("23")
+        Response response = step("Отправляем запрос на получение данных", () ->
+                baseRequestSpec(BASE_PATH + 23)
                         .header("x-api-key", API_KEY)
                         .when()
                         .get()
-                        .then()
         );
 
-        step("Проверяем, что тело пустой объект {}", () ->
-                response.spec(errorResponseSpec(404, "{}"))
+        step("Проверяем, что тело пустой объект {}", () -> {
+                    response.then().spec(baseResponseSpec(404));
+                    assertEquals("{}", response.getBody().asString());
+                }
         );
     }
 
     @Test
     @DisplayName("Попытка получения данных без токена")
     public void forbiddenResourceTest() {
-        ValidatableResponse response = step("Отправляем запрос на получение данных", () ->
-                getResourceSpec("23")
+        Response response = step("Отправляем запрос на получение данных", () ->
+                baseRequestSpec(BASE_PATH + 23)
                         .when()
                         .get()
-                        .then()
         );
 
         step("Проверяем, что доступ запрещен", () ->
-                response.spec(errorResponseSpec(403, null))
+                response.then()
+                .spec(baseResponseSpec(403))
         );
     }
 }
