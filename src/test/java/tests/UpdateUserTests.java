@@ -1,24 +1,27 @@
 package tests;
 
 import com.github.javafaker.Faker;
-import io.restassured.response.Response;
+import models.UpdateBodyModel;
+import models.ErrorResponseModel;
+import models.UpdateResponseModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Map;
 
+import static io.qameta.allure.Allure.step;
 import static io.restassured.RestAssured.given;
-import static io.restassured.http.ContentType.JSON;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static specs.BaseRequestSpec.baseRequestSpec;
+import static specs.BaseResponseSpec.baseResponseSpec;
 
 @DisplayName("Тесты на изменение данных")
 public class UpdateUserTests extends TestBase {
 
     private static final Faker faker = new Faker();
-    private static final String UPDATE_PATH = "/users/2";
+    private static final String BASE_PATH = "api/users/";
+    private static final int ID = 2;
 
     @Test
     @DisplayName("Успешное изменение данных пользователя")
@@ -26,19 +29,24 @@ public class UpdateUserTests extends TestBase {
         String name = faker.name().fullName();
         String job = faker.job().position();
 
-        Map<String, String> requestBody = Map.of("name", name, "job", job);
+        UpdateBodyModel updateData = new UpdateBodyModel();
+        updateData.setName(name);
+        updateData.setJob(job);
 
-        given()
-                .header("x-api-key", API_KEY)
-                .body(requestBody)
-                .contentType(JSON)
-                .when()
-                .put(UPDATE_PATH)
-                .then()
-                .log().ifValidationFails()
-                .statusCode(200)
-                .body("name", is(name))
-                .body("job", is(job));
+        UpdateResponseModel response = step("Отправляем запрос на изменнение данных", ()->
+                given(baseRequestSpec(BASE_PATH + ID))
+                        .header("x-api-key", API_KEY)
+                        .body(updateData)
+                        .when()
+                        .put()
+                        .then()
+                        .spec(baseResponseSpec(200))
+                        .extract().as(UpdateResponseModel.class));
+
+        step("Проверяем, что данные изменены", () -> assertAll("Валидация ответа",
+                () -> assertEquals(name, response.getName(), "Имя не соответствует"),
+                () -> assertEquals(job, response.getJob(), "Должность не соответствует")
+        ));
     }
 
     @Test
@@ -47,41 +55,47 @@ public class UpdateUserTests extends TestBase {
         String name = faker.name().fullName();
         String job = faker.job().position();
 
-        Map<String, String> requestBody = Map.of("name", name, "job", job);
+        UpdateBodyModel updateData = new UpdateBodyModel();
+        updateData.setName(name);
+        updateData.setJob(job);
 
         OffsetDateTime beforeRequest = OffsetDateTime.now(ZoneOffset.UTC);
 
-        Response response =
-                given()
+        UpdateResponseModel response = step("Отправляем запрос на изменнение данных", ()->
+                given(baseRequestSpec(BASE_PATH + ID))
                         .header("x-api-key", API_KEY)
-                        .body(requestBody)
-                        .contentType(JSON)
+                        .body(updateData)
                         .when()
-                        .put(UPDATE_PATH)
+                        .put()
                         .then()
-                        .log().ifValidationFails()
-                        .statusCode(200)
-                        .extract().response();
+                        .spec(baseResponseSpec(200))
+                        .extract().as(UpdateResponseModel.class));
 
-        OffsetDateTime updatedAt = OffsetDateTime.parse(response.path("updatedAt"));
-
-        assertTrue(updatedAt.isAfter(beforeRequest));
+        step("Проверяем, что время изменения данных совпадает", () -> {
+            OffsetDateTime updatedAt = OffsetDateTime.parse(response.getUpdatedAt());
+            assertTrue(updatedAt.isAfter(beforeRequest), "UpdateAt не обновилось");
+        });
     }
 
     @Test
     @DisplayName("Пустое поле в body при изменении данных пользователя")
     public void emptyBodyUserUpdate() {
         String requestBody = "";
-        given()
-                .header("x-api-key", API_KEY)
-                .body(requestBody)
-                .contentType(JSON)
-                .when()
-                .put(UPDATE_PATH)
-                .then()
-                .log().ifValidationFails()
-                .statusCode(400)
-                .body("error", is("Empty request body"))
-                .body("message", is("Request body cannot be empty for JSON endpoints"));
+        ErrorResponseModel response = step("Отправляем запрос на изменнение данных", ()->
+                given(baseRequestSpec(BASE_PATH + ID))
+                        .header("x-api-key", API_KEY)
+                        .body(requestBody)
+                        .when()
+                        .put()
+                        .then()
+                        .spec(baseResponseSpec(400))
+                        .extract().as(ErrorResponseModel.class)
+        );
+
+        step("Проверяем ошибку в ответе", () -> assertAll("Валидация ответа",
+                () -> assertEquals("Empty request body", response.getError(), "Неверный тип ошибки"),
+                () -> assertEquals("Request body cannot be empty for JSON endpoints",
+                        response.getMessage(), "Неверное сообщение об ошибке")
+        ));
     }
 }
